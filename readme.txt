@@ -1,4 +1,4 @@
-depois de clonar o projeto:
+depois de clonar o projeto, na pasta do projeto:
 
 1 - Crie um Ambiente Virtual:
 
