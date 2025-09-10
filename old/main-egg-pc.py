@@ -1,5 +1,3 @@
-# aplicação usada para teste para rachar eggs automaticamente dentro do jogo pokebro
-
 import pyautogui
 import time
 import random

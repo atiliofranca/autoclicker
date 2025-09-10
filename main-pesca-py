@@ -1,0 +1,194 @@
+import pyautogui
+import time
+import random
+import tkinter as tk
+from tkinter import simpledialog, messagebox
+
+def get_fishing_key():
+    """
+    Pede ao usuário para escolher a tecla de atalho de pesca.
+    """
+    root = tk.Tk()
+    root.withdraw()
+    
+    keys = [f'F{i}' for i in range(1, 13)]
+    
+    message = "Escolha a tecla de atalho para pesca (F1 a F12)."
+    
+    user_key = simpledialog.askstring("Tecla de Atalho", message, parent=root)
+    
+    if user_key and user_key.upper() in keys:
+        print(f"Tecla de atalho salva: {user_key.upper()}")
+        return user_key.lower()
+    else:
+        messagebox.showerror("Erro", "Tecla de atalho inválida. Saindo do script.")
+        return None
+
+def get_exclamation_region():
+    """
+    Guia o usuário para definir o ponto central da região de monitoramento da exclamação.
+    """
+    root = tk.Tk()
+    root.withdraw()
+    
+    if messagebox.askokcancel("Configurar Região", "Agora vamos configurar a área de busca da exclamação.\n\nColoque o mouse no CENTRO do ícone da exclamação e clique em OK para continuar.", parent=root):
+        
+        messagebox.showinfo("Captura de Região", "Capturando em 5 segundos...", parent=root)
+        print("Capturando ponto central da região em 5 segundos...")
+        time.sleep(5)
+        
+        center_x, center_y = pyautogui.position()
+
+        # Define as dimensões do quadrado de busca
+        width = 61
+        height = 39
+        
+        # Calcula as coordenadas do canto superior esquerdo para a região
+        left = center_x - width // 2
+        top = center_y - height // 2
+        region = (left, top, width, height)
+        
+        print(f"Região de busca salva: {region}")
+        return region
+    
+    return None
+
+def get_fishing_click_coordinates():
+    """
+    Pede ao usuário para posicionar o mouse e captura as coordenadas de clique de pesca.
+    """
+    root = tk.Tk()
+    root.withdraw()
+
+    if messagebox.askokcancel("Configurar Clique", "Agora vamos configurar o ponto de clique de pesca.\n\nClique em OK para continuar.", parent=root):
+        messagebox.showinfo("Captura de Ponto", "Coloque o mouse no local de clique de pesca.\nCapturando em 5 segundos...", parent=root)
+        
+        print("Capturando ponto de clique em 5 segundos...")
+        time.sleep(5)
+        
+        mouse_x, mouse_y = pyautogui.position()
+        print(f"Ponto de clique salvo: ({mouse_x}, {mouse_y})")
+
+        return mouse_x, mouse_y
+    
+    return None, None
+
+def start_fishing(fishing_key, mouse_x, mouse_y, is_first_start=False):
+    """Executa a primeira parte do processo: aperta F3 e clica no local especificado."""
+    print("Iniciando a pesca...")
+    
+    # Atraso inicial com base se é a primeira vez ou não
+    if is_first_start:
+        time.sleep(5)
+    else:
+        time.sleep(0.5) 
+
+    # clique para selecionar o jogo
+    pyautogui.click(x=mouse_x, y=mouse_y)
+    time.sleep(1)
+
+    pyautogui.press(fishing_key)
+    time.sleep(1) 
+
+    pyautogui.click(x=mouse_x, y=mouse_y)
+    print(f"'{fishing_key.upper()}' apertado e clique realizado em ({mouse_x}, {mouse_y}).")
+
+def monitor_screen_and_react(target_image_path, mouse_x, mouse_y, fishing_key, search_region):
+    # Monitora a tela para a imagem da exclamação e reage com Control + Seta.
+    print("Começando a monitorar a tela...")
+    last_direction = None
+    directions = ['up', 'down', 'left', 'right']
+
+    is_first_reaction = True
+    
+    # Adicionando o temporizador para tratamento de erro
+    last_action_time = time.time()
+    TIMEOUT = 8
+
+    try:
+        while True:
+            try:
+                exclamation_location = pyautogui.locateOnScreen(
+                    target_image_path,
+                    confidence=0.8,
+                    region=search_region
+                )
+            except Exception as e:
+                print(f"Erro na detecção de imagem: {e}")
+                exclamation_location = None
+
+            if exclamation_location:
+                print("Imagem da exclamação encontrada! Reagindo...")
+                
+                # Reseta o temporizador
+                last_action_time = time.time()
+                
+                if is_first_reaction:
+                    selected_direction = 'left'
+                    is_first_reaction = False
+                else:
+                    possible_directions = [d for d in directions if d != last_direction]
+                    if not possible_directions:
+                        possible_directions = directions
+                    
+                    selected_direction = random.choice(possible_directions)
+                
+                last_direction = selected_direction
+                
+                print(f"Pressionando Control + {selected_direction.capitalize()}...")
+                pyautogui.hotkey('ctrl', selected_direction)
+                
+                # Adicionando um atraso para dar tempo de a imagem desaparecer da tela
+                time.sleep(1.7) 
+            else:
+                # Se a imagem não for encontrada, verifique o tempo
+                print("Imagem não encontrada. Aguardando...")
+                current_time = time.time()
+                if current_time - last_action_time > TIMEOUT:
+                    print(f"Timeout de {TIMEOUT} segundos alcançado. Reiniciando a pesca...")
+                    
+                    # Agora clica Control + direcional para baixo
+                    pyautogui.hotkey('ctrl', 'down')
+                    time.sleep(1)
+                    
+                    # Passa o parâmetro 'is_first_start=False' para o timer de 0.5s
+                    start_fishing(fishing_key, mouse_x, mouse_y, is_first_start=False)
+                    last_action_time = time.time() # Reseta o temporizador após reiniciar
+                
+                # Aumentando a frequência da verificação quando a imagem não está presente
+                time.sleep(0.5) 
+
+    except KeyboardInterrupt:
+        print("\nScript interrompido pelo usuário.")
+    except Exception as e:
+        print(f"Ocorreu um erro inesperado: {e}")
+
+if __name__ == "__main__":
+    image_file = 'exclamacao-pesca-sem-fundo.png'
+
+    # 1. Obter a tecla de atalho
+    fishing_key = get_fishing_key()
+    if not fishing_key:
+        exit()
+
+    # 2. Obter as coordenadas da exclamação
+    search_region = get_exclamation_region()
+    if not search_region:
+        exit()
+        
+    # 3. Obter as coordenadas de clique de pesca
+    mouse_x, mouse_y = get_fishing_click_coordinates()
+    if mouse_x is None:
+        exit()
+    
+    # 4. Janela de confirmação final para começar
+    root = tk.Tk()
+    root.withdraw()
+    if messagebox.askokcancel("Tudo Pronto!", "Todas as configurações foram salvas.\n\nClique em OK para iniciar a automação de pesca.", parent=root):
+        # Iniciar o script de pesca pela primeira vez
+        start_fishing(fishing_key, mouse_x, mouse_y, is_first_start=True)
+        
+        # Iniciar o monitoramento
+        monitor_screen_and_react(image_file, mouse_x, mouse_y, fishing_key, search_region)
+    else:
+        print("Operação cancelada. Saindo do script.")
