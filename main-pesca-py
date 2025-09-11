@@ -39,9 +39,9 @@ def get_exclamation_region():
         
         center_x, center_y = pyautogui.position()
 
-        # Define as dimensões do quadrado de busca
-        width = 61
-        height = 39
+        # Aumentando o tamanho do quadrado de busca para maior confiabilidade
+        width = 100
+        height = 60
         
         # Calcula as coordenadas do canto superior esquerdo para a região
         left = center_x - width // 2
@@ -139,7 +139,7 @@ def monitor_screen_and_react(target_image_path, mouse_x, mouse_y, fishing_key, s
                 pyautogui.hotkey('ctrl', selected_direction)
                 
                 # Adicionando um atraso para dar tempo de a imagem desaparecer da tela
-                time.sleep(1.7) 
+                time.sleep(1.9) 
             else:
                 # Se a imagem não for encontrada, verifique o tempo
                 print("Imagem não encontrada. Aguardando...")
@@ -151,8 +151,7 @@ def monitor_screen_and_react(target_image_path, mouse_x, mouse_y, fishing_key, s
                     pyautogui.hotkey('ctrl', 'down')
                     time.sleep(1)
                     
-                    # Passa o parâmetro 'is_first_start=False' para o timer de 0.5s
-                    start_fishing(fishing_key, mouse_x, mouse_y, is_first_start=False)
+                    start_fishing(fishing_key, mouse_x, mouse_y)
                     last_action_time = time.time() # Reseta o temporizador após reiniciar
                 
                 # Aumentando a frequência da verificação quando a imagem não está presente
