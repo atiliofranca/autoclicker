@@ -53,6 +53,13 @@ if __name__ == "__main__":
         print("Operação cancelada. Saindo do script.")
         exit()
 
+    # NOVO: Timer de 5 segundos antes de iniciar a automação
+    print("Iniciando a automação em 5 segundos...")
+    for i in range(5, 0, -1):
+        print(f"{i}...")
+        time.sleep(1)
+    print("Iniciando agora!")
+
     for i in range(100):
         print(f"Execução número: {i + 1}")
         time.sleep(1)
